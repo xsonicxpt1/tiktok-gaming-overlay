@@ -1,0 +1,76 @@
+{
+  "githubUsername": "xsonicxpt1",
+  "repoName": "tiktok-gaming-overlay",
+  "tiktokHandle": "@xsonicxpty",
+  "currentGame": "Aguardando jogo...",
+  "theme": {
+    "primary": "#FF0050",
+    "secondary": "#FFFFFF",
+    "background": "#0A0A0F",
+    "accent": "#00F2EA",
+    "blurRadius": "8px",
+    "fontFamily": "'Orbitron', system-ui, -apple-system, sans-serif"
+  },
+  "layout": {
+    "width": 1080,
+    "height": 1920,
+    "webcam": {
+      "enabled": true,
+      "x": 780,
+      "y": 1400,
+      "width": 280,
+      "height": 500,
+      "borderRadius": 16,
+      "borderWidth": 3,
+      "borderColor": "#FF0050"
+    },
+    "liveBadge": {
+      "x": 20,
+      "y": 20,
+      "text": "AO VIVO",
+      "fontSize": 16,
+      "background": "#FF0050",
+      "color": "#FFFFFF"
+    },
+    "handleLabel": {
+      "x": 20,
+      "y": 1840,
+      "text": "@xsonicxpty",
+      "fontSize": 20,
+      "color": "#FFFFFF"
+    },
+    "privacyNotice": {
+      "x": 20,
+      "y": 1890,
+      "text": "Conteúdo desfocado por privacidade (RGPD)",
+      "fontSize": 11,
+      "color": "#555555"
+    }
+  },
+  "alerts": {
+    "enabled": true,
+    "sound": true,
+    "sfx": {
+      "follow": "https://cdn.jsdelivr.net/gh/xsonicxpt1/tiktok-gaming-overlay@main/assets/sfx/follow.mp3",
+      "gift": "https://cdn.jsdelivr.net/gh/xsonicxpt1/tiktok-gaming-overlay@main/assets/sfx/gift.mp3",
+      "subscribe": "https://cdn.jsdelivr.net/gh/xsonicxpt1/tiktok-gaming-overlay@main/assets/sfx/subscribe.mp3",
+      "like": "https://cdn.jsdelivr.net/gh/xsonicxpt1/tiktok-gaming-overlay@main/assets/sfx/like.mp3",
+      "share": "https://cdn.jsdelivr.net/gh/xsonicxpt1/tiktok-gaming-overlay@main/assets/sfx/share.mp3"
+    },
+    "duration": 4500,
+    "position": "top-center",
+    "animation": "slide-down-pop"
+  },
+  "chat": {
+    "enabled": false,
+    "maxMessages": 3,
+    "position": "left",
+    "webSocketUrl": ""
+  },
+  "urls": {
+    "gameFrame": "https://sua-fonte-de-jogo.exemplo.com",
+    "githubPagesBase": "https://xsonicxpt1.github.io/tiktok-gaming-overlay",
+    "mainOverlay": "https://xsonicxpt1.github.io/tiktok-gaming-overlay/main.html",
+    "alertsOverlay": "https://xsonicxpt1.github.io/tiktok-gaming-overlay/alerts.html"
+  }
+}

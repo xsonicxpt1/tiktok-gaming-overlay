@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local config overrides (não commite tokens/secrets)
+config.local.json
+
+# Build artifacts
+dist/
+build/
+
+# Audio source files (use assets/sfx/ para produção)
+*.wav
+*.aiff
+*.flac

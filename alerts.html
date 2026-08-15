@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>TikTok Gaming Alerts Overlay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #FF0050;
+      --secondary: #FFFFFF;
+      --bg: transparent;
+      --accent: #00F2EA;
+      --font: 'Orbitron', system-ui, -apple-system, sans-serif;
+      --vw: 10.8px;
+      --vh: 19.2px;
+    }
+    @media (max-width: 1080px) {
+      :root {
+        --vw: calc(100vw / 100);
+        --vh: calc(100vw * 1920 / 1080 / 100);
+      }
+    }
+    @media (max-height: 1920px) {
+      :root {
+        --vh: calc(100vh / 100);
+        --vw: calc(100vh * 1080 / 1920 / 100);
+      }
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('https://fonts.gstatic.com/s/orbitron/v18/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6BoWU.woff2') format('woff2');
+      font-weight: 400 900;
+      font-display: swap;
+    }
+    body {
+      width: 100vw; max-width: 100%;
+      height: 100vh; max-height: 100%;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--secondary);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 1080 / 1920;
+      pointer-events: none; /* critical for alert overlay */
+    }
+    #alert-container {
+      position: absolute;
+      top: calc(180 * var(--vh) / 19.2);
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(850 * var(--vw) / 10.8);
+      z-index: 100;
+      pointer-events: none;
+    }
+    .alert {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px) scale(0.9);
+      opacity: 0;
+      pointer-events: none;
+      transition: 
+        transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.3s ease;
+    }
+    .alert.show {
+      transform: translateX(-50%) translateY(0) scale(1);
+      opacity: 1;
+    }
+    .alert.hide {
+      transform: translateX(-50%) translateY(-80px) scale(0.95);
+      opacity: 0;
+    }
+    .alert-content {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: calc(18 * var(--vw) / 10.8);
+      padding: calc(18 * var(--vh) / 19.2) calc(36 * var(--vw) / 10.8);
+      background: linear-gradient(135deg, rgba(10, 10, 20, 0.98), rgba(20, 20, 35, 0.98));
+      border: calc(2 * var(--vw) / 10.8) solid var(--primary);
+      border-radius: calc(18 * var(--vw) / 10.8);
+      box-shadow: 
+        0 calc(10 * var(--vh) / 19.2) calc(50 * var(--vh) / 19.2) rgba(255, 0, 80, 0.5),
+        inset 0 calc(1 * var(--vh) / 19.2) calc(2 * var(--vh) / 19.2) rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(calc(10 * var(--vw) / 10.8));
+      min-width: calc(450 * var(--vw) / 10.8);
+      max-width: calc(850 * var(--vw) / 10.8);
+      overflow: hidden;
+    }
+    .alert-content::before {
+      content: '';
+      position: absolute;
+      inset: calc(-2 * var(--vw) / 10.8);
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+      background-size: 200% 100%;
+      border-radius: calc(20 * var(--vw) / 10.8);
+      z-index: -1;
+      animation: shimmer 3s linear infinite;
+      opacity: 0.6;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .alert-icon {
+      width: calc(72 * var(--vw) / 10.8);
+      height: calc(72 * var(--vh) / 19.2);
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(32 * var(--vw) / 10.8);
+      box-shadow: 
+        0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) rgba(0,0,0,0.5),
+        inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,255,255,0.2);
+      animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes iconPop {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .alert-icon.follow { background: linear-gradient(135deg, #FF0050, #ff4d7a); box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) rgba(255,0,80,0.6), inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,255,255,0.2); }
+    .alert-icon.gift { background: linear-gradient(135deg, #00F2EA, #00ffea); box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) rgba(0,242,234,0.6), inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,255,255,0.2); }
+    .alert-icon.subscribe { background: linear-gradient(135deg, #FFD700, #FFA500); box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) rgba(255,215,0,0.6), inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,255,255,0.2); }
+    .alert-icon.like { background: linear-gradient(135deg, #FF0050, #ff4d7a); box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) rgba(255,0,80,0.6), inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,255,255,0.2); }
+    .alert-icon.share { background: linear-gradient(135deg, #8B5CF6, #A855F7); box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) rgba(139,92,246,0.6), inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,255,255,0.2); }
+    .alert-text { flex: 1; text-align: left; }
+    .alert-event {
+      font-size: calc(13 * var(--vw) / 10.8);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: calc(1.5 * var(--vw) / 10.8);
+      color: var(--primary);
+      margin-bottom: calc(4 * var(--vh) / 19.2);
+      font-family: var(--font);
+    }
+    .alert-event.gift { color: var(--accent); }
+    .alert-event.subscribe { color: #FFD700; }
+    .alert-event.like { color: #FF0050; }
+    .alert-event.share { color: #8B5CF6; }
+    .alert-user {
+      font-size: calc(30 * var(--vw) / 10.8);
+      font-weight: 800;
+      color: var(--secondary);
+      text-shadow: 0 calc(2 * var(--vh) / 19.2) calc(10 * var(--vh) / 19.2) rgba(0,0,0,0.9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.1;
+    }
+    .alert-gift-name {
+      font-size: calc(15 * var(--vw) / 10.8);
+      color: var(--accent);
+      font-weight: 600;
+      margin-top: calc(4 * var(--vh) / 19.2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alert-gift-count {
+      font-size: calc(13 * var(--vw) / 10.8);
+      color: #888;
+      margin-top: calc(2 * var(--vh) / 19.2);
+    }
+    /* Particles burst effect */
+    .alert-particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 10;
+    }
+    .particle {
+      position: absolute;
+      width: calc(8 * var(--vw) / 10.8);
+      height: calc(8 * var(--vh) / 19.2);
+      border-radius: 50%;
+      opacity: 0;
+      animation: particleBurst 0.8s ease-out forwards;
+    }
+    @keyframes particleBurst {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .alert { transition: opacity 0.2s ease; }
+      .alert.show { transform: translateX(-50%) translateY(0) scale(1); }
+      .alert-content::before { animation: none; }
+      .alert-icon { animation: none; }
+      .particle { animation: none; display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="alert-container"></div>
+
+  <script>
+    const CONFIG_URL = 'config.json';
+    let config = {};
+    const audioCache = {};
+
+    async function loadConfig() {
+      try {
+        const res = await fetch(CONFIG_URL, { cache: 'no-cache' });
+        config = await res.json();
+        preloadAudio();
+      } catch (e) { console.warn('Config não carregado', e); }
+    }
+
+    function preloadAudio() {
+      if (!config.alerts?.sound) return;
+      Object.entries(config.alerts.sfx || {}).forEach(([key, url]) => {
+        const audio = new Audio(url);
+        audio.volume = 0.65;
+        audio.preload = 'auto';
+        audioCache[key] = audio;
+      });
+    }
+
+    function playSfx(type) {
+      if (!config.alerts?.sound) return;
+      const audio = audioCache[type];
+      if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+    }
+
+    function createParticles(container, color) {
+      const particlesContainer = document.createElement('div');
+      particlesContainer.className = 'alert-particles';
+      container.appendChild(particlesContainer);
+      
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.background = color;
+        particle.style.left = '50%';
+        particle.style.top = '50%';
+        const angle = (i / count) * Math.PI * 2;
+        const distance = 120 + Math.random() * 80;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        particle.style.animationDelay = `${Math.random() * 0.1}s`;
+        particlesContainer.appendChild(particle);
+      }
+      setTimeout(() => particlesContainer.remove(), 1000);
+    }
+
+    function showAlert(event, user, giftName = null, giftCount = 1) {
+      const container = document.getElementById('alert-container');
+      const alert = document.createElement('div');
+      alert.className = 'alert';
+
+      const icons = { follow: '👤', gift: '🎁', subscribe: '⭐', like: '❤️', share: '🔗' };
+      const iconClass = { follow: 'follow', gift: 'gift', subscribe: 'subscribe', like: 'like', share: 'share' };
+      const labels = { follow: 'NOVO SEGUIDOR', gift: 'PRESENTE RECEBIDO', subscribe: 'NOVA INSCRIÇÃO', like: 'LIKE', share: 'COMPARTILHOU' };
+      const colors = { follow: '#FF0050', gift: '#00F2EA', subscribe: '#FFD700', like: '#FF0050', share: '#8B5CF6' };
+
+      alert.innerHTML = `
+        <div class="alert-content">
+          <div class="alert-icon ${iconClass[event]}">${icons[event]}</div>
+          <div class="alert-text">
+            <div class="alert-event ${iconClass[event]}">${labels[event]}</div>
+            <div class="alert-user">${escapeHtml(user)}</div>
+            ${giftName ? `<div class="alert-gift-name">${escapeHtml(giftName)}${giftCount > 1 ? ` x${giftCount}` : ''}</div>` : ''}
+            ${giftCount > 1 ? `<div class="alert-gift-count">x${giftCount}</div>` : ''}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(alert);
+      
+      // Create particles
+      const alertContent = alert.querySelector('.alert-content');
+      createParticles(alertContent, colors[event] || '#FF0050');
+      
+      requestAnimationFrame(() => alert.classList.add('show'));
+      playSfx(event);
+
+      const duration = config.alerts?.duration || 4000;
+      setTimeout(() => {
+        alert.classList.remove('show');
+        alert.classList.add('hide');
+        setTimeout(() => alert.remove(), 600);
+      }, duration);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function parseUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return { 
+        event: params.get('event'), 
+        user: params.get('user') || 'Alguém', 
+        gift: params.get('gift'),
+        count: parseInt(params.get('count')) || 1
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadConfig();
+      const { event, user, gift, count } = parseUrlParams();
+      if (event && config.alerts?.enabled) showAlert(event, user, gift, count);
+
+      window.addEventListener('message', (e) => {
+        if (e.data?.type === 'TIKTOK_ALERT') {
+          showAlert(e.data.event, e.data.user, e.data.gift, e.data.count);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>TikTok Gaming Live Overlay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #FF0050;
+      --secondary: #FFFFFF;
+      --bg: #0A0A0F;
+      --accent: #00F2EA;
+      --blur-radius: 8px;
+      --font: 'Orbitron', system-ui, -apple-system, sans-serif;
+      --vw: 10.8px;
+      --vh: 19.2px;
+      --card-bg: rgba(15, 15, 25, 0.92);
+      --border-glow: rgba(255, 0, 80, 0.6);
+    }
+    @media (max-width: 1080px) {
+      :root {
+        --vw: calc(100vw / 100);
+        --vh: calc(100vw * 1920 / 1080 / 100);
+      }
+    }
+    @media (max-height: 1920px) {
+      :root {
+        --vh: calc(100vh / 100);
+        --vw: calc(100vh * 1080 / 1920 / 100);
+      }
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('https://fonts.gstatic.com/s/orbitron/v18/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6BoWU.woff2') format('woff2');
+      font-weight: 400 900;
+      font-display: swap;
+    }
+    body {
+      width: 100vw; max-width: 100%;
+      height: 100vh; max-height: 100%;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--secondary);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 1080 / 1920;
+    }
+    /* Subtle animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,0,80,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,0,80,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 20s linear infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(60px, 60px); }
+    }
+    /* === GAME CONTENT AREA (full screen game capture) === */
+    #game-frame {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+      background: #000;
+      z-index: 1;
+    }
+    /* === TOP BAR: Live indicator + Game title === */
+    .top-bar {
+      position: absolute;
+      top: calc(20 * var(--vh) / 19.2);
+      left: calc(20 * var(--vw) / 10.8);
+      right: calc(20 * var(--vw) / 10.8);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: calc(10 * var(--vw) / 10.8);
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid var(--primary);
+      border-radius: calc(50 * var(--vw) / 10.8);
+      padding: calc(6 * var(--vh) / 19.2) calc(16 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) var(--border-glow);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(20 * var(--vh) / 19.2) var(--border-glow); }
+      50% { box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(32 * var(--vh) / 19.2) rgba(255,0,80,0.9); }
+    }
+    .live-dot {
+      width: calc(10 * var(--vw) / 10.8);
+      height: calc(10 * var(--vh) / 19.2);
+      background: var(--primary);
+      border-radius: 50%;
+      animation: blink 1s ease-in-out infinite;
+      box-shadow: 0 0 calc(8 * var(--vw) / 10.8) var(--primary);
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+    .live-text {
+      font-size: calc(16 * var(--vw) / 10.8);
+      font-weight: 700;
+      letter-spacing: calc(2 * var(--vw) / 10.8);
+      text-transform: uppercase;
+      color: var(--primary);
+      font-family: var(--font);
+    }
+    .game-title-card {
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid rgba(0, 242, 234, 0.4);
+      border-radius: calc(12 * var(--vw) / 10.8);
+      padding: calc(8 * var(--vh) / 19.2) calc(20 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      max-width: calc(500 * var(--vw) / 10.8);
+      text-align: right;
+    }
+    .game-label {
+      font-size: calc(11 * var(--vw) / 10.8);
+      font-weight: 500;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: calc(1.5 * var(--vw) / 10.8);
+      margin-bottom: calc(2 * var(--vh) / 19.2);
+    }
+    .game-name {
+      font-size: calc(20 * var(--vw) / 10.8);
+      font-weight: 800;
+      color: var(--secondary);
+      text-shadow: 0 calc(2 * var(--vh) / 19.2) calc(8 * var(--vh) / 19.2) rgba(0,0,0,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* === WEBCAM (bottom-right corner, gaming standard) === */
+    #webcam-container {
+      position: absolute;
+      bottom: calc(20 * var(--vh) / 19.2);
+      right: calc(20 * var(--vw) / 10.8);
+      width: calc(280 * var(--vw) / 10.8);
+      height: calc(500 * var(--vh) / 19.2);
+      border-radius: calc(16 * var(--vw) / 10.8);
+      border: calc(3 * var(--vw) / 10.8) solid var(--primary);
+      overflow: hidden;
+      box-shadow: 
+        0 calc(8 * var(--vh) / 19.2) calc(32 * var(--vh) / 19.2) rgba(255,0,80,0.4),
+        inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,0,80,0.2);
+      z-index: 15;
+      display: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    #webcam-container:hover {
+      transform: scale(1.02);
+      box-shadow: 
+        0 calc(12 * var(--vh) / 19.2) calc(40 * var(--vh) / 19.2) rgba(255,0,80,0.6),
+        inset 0 calc(-2 * var(--vh) / 19.2) calc(4 * var(--vh) / 19.2) rgba(255,0,80,0.3);
+    }
+    #webcam-container video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: rotateY(180deg);
+    }
+    /* Webcam label */
+    .webcam-label {
+      position: absolute;
+      top: calc(-28 * var(--vh) / 19.2);
+      left: 0;
+      font-size: calc(12 * var(--vw) / 10.8);
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: calc(1 * var(--vw) / 10.8);
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid var(--primary);
+      border-bottom: none;
+      border-radius: calc(8 * var(--vw) / 10.8) calc(8 * var(--vw) / 10.8) 0 0;
+      padding: calc(4 * var(--vh) / 19.2) calc(12 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      white-space: nowrap;
+    }
+    /* === BOTTOM BAR: Handle + Stats === */
+    .bottom-bar {
+      position: absolute;
+      bottom: calc(20 * var(--vh) / 19.2);
+      left: calc(20 * var(--vw) / 10.8);
+      right: calc(340 * var(--vw) / 10.8);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .handle-card {
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid rgba(255, 0, 80, 0.4);
+      border-radius: calc(12 * var(--vw) / 10.8);
+      padding: calc(10 * var(--vh) / 19.2) calc(20 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      display: flex;
+      align-items: center;
+      gap: calc(12 * var(--vw) / 10.8);
+    }
+    .handle-icon {
+      font-size: calc(24 * var(--vw) / 10.8);
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(calc(-4 * var(--vh) / 19.2)); }
+    }
+    .handle-text {
+      font-size: calc(20 * var(--vw) / 10.8);
+      font-weight: 700;
+      color: var(--secondary);
+      text-shadow: 0 calc(2 * var(--vh) / 19.2) calc(8 * var(--vh) / 19.2) rgba(0,0,0,0.8);
+    }
+    .handle-text span {
+      color: var(--primary);
+    }
+    /* Stats cards */
+    .stats-row {
+      display: flex;
+      gap: calc(12 * var(--vw) / 10.8);
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid rgba(0, 242, 234, 0.3);
+      border-radius: calc(12 * var(--vw) / 10.8);
+      padding: calc(8 * var(--vh) / 19.2) calc(16 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      text-align: center;
+      min-width: calc(100 * var(--vw) / 10.8);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(calc(-4 * var(--vh) / 19.2));
+      border-color: var(--accent);
+    }
+    .stat-value {
+      font-size: calc(22 * var(--vw) / 10.8);
+      font-weight: 800;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: calc(10 * var(--vw) / 10.8);
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: calc(0.5 * var(--vw) / 10.8);
+      margin-top: calc(4 * var(--vh) / 19.2);
+    }
+    /* === SIDE PANEL: Recent events (follows/gifts) === */
+    .side-panel {
+      position: absolute;
+      top: calc(100 * var(--vh) / 19.2);
+      right: calc(20 * var(--vw) / 10.8);
+      width: calc(280 * var(--vw) / 10.8);
+      max-height: calc(700 * var(--vh) / 19.2);
+      z-index: 15;
+      pointer-events: none;
+    }
+    .panel-header {
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid var(--primary);
+      border-bottom: none;
+      border-radius: calc(12 * var(--vw) / 10.8) calc(12 * var(--vw) / 10.8) 0 0;
+      padding: calc(10 * var(--vh) / 19.2) calc(16 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title {
+      font-size: calc(14 * var(--vw) / 10.8);
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: calc(1 * var(--vw) / 10.8);
+    }
+    .panel-count {
+      font-size: calc(14 * var(--vw) / 10.8);
+      font-weight: 800;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .events-list {
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid rgba(255, 0, 80, 0.3);
+      border-top: none;
+      border-radius: 0 0 calc(12 * var(--vw) / 10.8) calc(12 * var(--vw) / 10.8);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      max-height: calc(600 * var(--vh) / 19.2);
+      overflow-y: auto;
+      padding: calc(8 * var(--vh) / 19.2);
+    }
+    .event-item {
+      display: flex;
+      align-items: center;
+      gap: calc(10 * var(--vw) / 10.8);
+      padding: calc(8 * var(--vh) / 19.2) calc(10 * var(--vw) / 10.8);
+      border-radius: calc(8 * var(--vw) / 10.8);
+      background: rgba(255, 255, 255, 0.03);
+      margin-bottom: calc(6 * var(--vh) / 19.2);
+      animation: slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-left: calc(3 * var(--vw) / 10.8) solid var(--primary);
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(calc(30 * var(--vw) / 10.8)); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .event-item.gift { border-left-color: var(--accent); }
+    .event-item.subscribe { border-left-color: #FFD700; }
+    .event-item.like { border-left-color: #FF0050; }
+    .event-icon {
+      width: calc(36 * var(--vw) / 10.8);
+      height: calc(36 * var(--vh) / 19.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(16 * var(--vw) / 10.8);
+      flex-shrink: 0;
+    }
+    .event-icon.follow { background: linear-gradient(135deg, var(--primary), #ff4d7a); }
+    .event-icon.gift { background: linear-gradient(135deg, var(--accent), #00ffea); }
+    .event-icon.subscribe { background: linear-gradient(135deg, #FFD700, #FFA500); }
+    .event-icon.like { background: linear-gradient(135deg, #FF0050, #ff4d7a); }
+    .event-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .event-user {
+      font-size: calc(13 * var(--vw) / 10.8);
+      font-weight: 700;
+      color: var(--secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .event-type {
+      font-size: calc(10 * var(--vw) / 10.8);
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: calc(0.5 * var(--vw) / 10.8);
+    }
+    .event-gift {
+      font-size: calc(11 * var(--vw) / 10.8);
+      color: var(--accent);
+      font-weight: 500;
+      margin-top: calc(2 * var(--vh) / 19.2);
+    }
+    /* === BLUR TOGGLE (RGPD) === */
+    .blur-toggle {
+      position: absolute;
+      bottom: calc(20 * var(--vh) / 19.2);
+      right: calc(340 * var(--vw) / 10.8);
+      z-index: 25;
+      pointer-events: auto;
+    }
+    .blur-btn {
+      width: calc(56 * var(--vw) / 10.8);
+      height: calc(56 * var(--vh) / 19.2);
+      border-radius: calc(12 * var(--vw) / 10.8);
+      border: calc(2 * var(--vw) / 10.8) solid var(--primary);
+      background: var(--card-bg);
+      backdrop-filter: blur(calc(8 * var(--vw) / 10.8));
+      color: var(--primary);
+      font-family: var(--font);
+      font-size: calc(11 * var(--vw) / 10.8);
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      user-select: none;
+      box-shadow: 0 calc(4 * var(--vh) / 19.2) calc(16 * var(--vh) / 19.2) rgba(0,0,0,0.4);
+    }
+    .blur-btn:hover {
+      background: var(--primary);
+      color: var(--bg);
+      transform: scale(1.05);
+      box-shadow: 0 calc(6 * var(--vh) / 19.2) calc(24 * var(--vh) / 19.2) var(--border-glow);
+    }
+    .blur-btn:active { transform: scale(0.98); }
+    .blur-btn.blur-off {
+      border-color: #444;
+      color: #666;
+    }
+    .blur-btn.blur-off:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(255, 0, 80, 0.1);
+    }
+    .blur-tooltip {
+      position: absolute;
+      bottom: calc(70 * var(--vh) / 19.2);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      background: var(--card-bg);
+      border: calc(1 * var(--vw) / 10.8) solid var(--primary);
+      border-radius: calc(6 * var(--vw) / 10.8);
+      padding: calc(4 * var(--vh) / 19.2) calc(10 * var(--vw) / 10.8);
+      font-size: calc(10 * var(--vw) / 10.8);
+      color: var(--secondary);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      pointer-events: none;
+    }
+    .blur-btn:hover .blur-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* === PRIVACY NOTICE === */
+    .privacy-notice {
+      position: absolute;
+      bottom: calc(10 * var(--vh) / 19.2);
+      left: calc(20 * var(--vw) / 10.8);
+      font-size: calc(11 * var(--vw) / 10.8);
+      color: #555;
+      z-index: 20;
+      pointer-events: none;
+    }
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      body::before { animation: none; }
+      .live-dot { animation: none; }
+      .handle-icon { animation: none; }
+    }
+    /* Scrollbar styling */
+    .events-list::-webkit-scrollbar {
+      width: calc(6 * var(--vw) / 10.8);
+    }
+    .events-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .events-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 0, 80, 0.4);
+      border-radius: calc(3 * var(--vw) / 10.8);
+    }
+    .events-list::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Game capture iframe (set via config) -->
+  <iframe id="game-frame" src="about:blank" title="Game Capture" allow="camera; microphone" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="live-indicator" aria-live="polite">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="live-text">AO VIVO</span>
+    </div>
+    <div class="game-title-card">
+      <div class="game-label">A jogar</div>
+      <div class="game-name" id="game-name">Aguardando jogo...</div>
+    </div>
+  </div>
+
+  <!-- Side Panel (Recent Events) -->
+  <div class="side-panel" id="side-panel">
+    <div class="panel-header">
+      <span class="panel-title">Atividade Recente</span>
+      <span class="panel-count" id="event-count">0</span>
+    </div>
+    <div class="events-list" id="events-list"></div>
+  </div>
+
+  <!-- Webcam Container -->
+  <div id="webcam-container">
+    <div class="webcam-label">WEBCAM</div>
+    <video id="webcam" autoplay muted playsinline></video>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar">
+    <div class="handle-card">
+      <span class="handle-icon" aria-hidden="true">🎮</span>
+      <span class="handle-text"><span>@</span><span id="handle-text">seuusuario</span></span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-followers">0</div>
+        <div class="stat-label">Seguidores</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-viewers">0</div>
+        <div class="stat-label">Viewers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-likes">0</div>
+        <div class="stat-label">Likes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blur Toggle (RGPD) -->
+  <div class="blur-toggle">
+    <button class="blur-btn" id="blur-btn" aria-label="Alternar blur do fundo (tecla B)" title="Clique para alternar blur">
+      BLUR
+      <span class="blur-tooltip">Tecla B • RGPD</span>
+    </button>
+  </div>
+
+  <!-- Privacy Notice -->
+  <div class="privacy-notice" id="privacy-notice">Conteúdo desfocado por privacidade (RGPD)</div>
+
+  <script>
+    const CONFIG_URL = 'config.json';
+    let config = {};
+    let eventCount = 0;
+    const MAX_EVENTS = 10;
+
+    async function loadConfig() {
+      try {
+        const res = await fetch(CONFIG_URL, { cache: 'no-cache' });
+        config = await res.json();
+        applyConfig();
+      } catch (e) { console.warn('Config não carregado', e); }
+    }
+
+    function applyConfig() {
+      // Theme
+      if (config.theme) {
+        document.documentElement.style.setProperty('--primary', config.theme.primary || '#FF0050');
+        document.documentElement.style.setProperty('--accent', config.theme.accent || '#00F2EA');
+        document.documentElement.style.setProperty('--blur-radius', config.theme.blurRadius || '8px');
+      }
+      // Game frame URL
+      if (config.urls?.gameFrame) {
+        document.getElementById('game-frame').src = config.urls.gameFrame;
+      }
+      // Handle
+      if (config.tiktokHandle) {
+        document.getElementById('handle-text').textContent = config.tiktokHandle.replace('@', '');
+      }
+      // Game name
+      if (config.currentGame) {
+        document.getElementById('game-name').textContent = config.currentGame;
+      }
+      // Webcam
+      const wc = document.getElementById('webcam-container');
+      if (config.layout?.webcam?.enabled) {
+        wc.style.display = 'block';
+        startWebcam();
+      } else {
+        wc.style.display = 'none';
+      }
+      // Privacy notice
+      if (config.layout?.privacyNotice?.text) {
+        document.getElementById('privacy-notice').textContent = config.layout.privacyNotice.text;
+      }
+      // Stats (if provided)
+      if (config.stats) {
+        updateStats(config.stats);
+      }
+    }
+
+    async function startWebcam() {
+      const video = document.getElementById('webcam');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 720 }, height: { ideal: 1280 }, facingMode: 'user' },
+          audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+      } catch (err) { console.error('Webcam error:', err); }
+    }
+
+    // Stats update
+    function updateStats(stats) {
+      if (stats.followers !== undefined) document.getElementById('stat-followers').textContent = formatNumber(stats.followers);
+      if (stats.viewers !== undefined) document.getElementById('stat-viewers').textContent = formatNumber(stats.viewers);
+      if (stats.likes !== undefined) document.getElementById('stat-likes').textContent = formatNumber(stats.likes);
+    }
+
+    function formatNumber(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+      return n.toString();
+    }
+
+    // Blur toggle (RGPD)
+    let blurEnabled = true;
+    const gameFrame = document.getElementById('game-frame');
+    const blurBtn = document.getElementById('blur-btn');
+    const privacyNotice = document.getElementById('privacy-notice');
+
+    function toggleBlur() {
+      blurEnabled = !blurEnabled;
+      gameFrame.style.filter = blurEnabled ? 'blur(var(--blur-radius))' : 'none';
+      privacyNotice.style.display = blurEnabled ? 'block' : 'none';
+      blurBtn.classList.toggle('blur-off', !blurEnabled);
+      blurBtn.textContent = blurEnabled ? 'BLUR' : 'CLARO';
+      // Re-add tooltip
+      const tooltip = document.createElement('span');
+      tooltip.className = 'blur-tooltip';
+      tooltip.textContent = 'Tecla B • RGPD';
+      blurBtn.appendChild(tooltip);
+    }
+
+    blurBtn.addEventListener('click', toggleBlur);
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'b' && !e.target.matches('input, textarea, button')) {
+        e.preventDefault();
+        toggleBlur();
+      }
+    });
+    window.addEventListener('message', e => {
+      if (e.data?.type === 'TOGGLE_BLUR') toggleBlur();
+    });
+
+    // Event system (for alerts overlay integration)
+    window.addEventListener('message', e => {
+      if (e.data?.type === 'TIKTOK_EVENT') {
+        addEvent(e.data.event, e.data.user, e.data.gift);
+      }
+      if (e.data?.type === 'TIKTOK_STATS') {
+        updateStats(e.data);
+      }
+      if (e.data?.type === 'TIKTOK_GAME') {
+        document.getElementById('game-name').textContent = e.data.game;
+      }
+    });
+
+    function addEvent(type, user, giftName = null) {
+      const list = document.getElementById('events-list');
+      const item = document.createElement('div');
+      item.className = `event-item ${type}`;
+      
+      const icons = { follow: '👤', gift: '🎁', subscribe: '⭐', like: '❤️' };
+      const labels = { follow: 'Seguiu', gift: 'Presente', subscribe: 'Inscrito', like: 'Deu Like' };
+      
+      item.innerHTML = `
+        <div class="event-icon ${type}">${icons[type]}</div>
+        <div class="event-info">
+          <div class="event-user">${escapeHtml(user)}</div>
+          <div class="event-type">${labels[type]}</div>
+          ${giftName ? `<div class="event-gift">${escapeHtml(giftName)}</div>` : ''}
+        </div>
+      `;
+      
+      list.insertBefore(item, list.firstChild);
+      
+      // Limit events
+      while (list.children.length > MAX_EVENTS) {
+        list.removeChild(list.lastChild);
+      }
+      
+      eventCount++;
+      document.getElementById('event-count').textContent = eventCount;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Visibility handling
+    document.addEventListener('visibilitychange', () => {
+      const v = document.getElementById('webcam');
+      if (document.hidden) v?.pause(); else v?.play().catch(() => {});
+    });
+
+    // Init
+    document.addEventListener('DOMContentLoaded', loadConfig);
+  </script>
+</body>
+</html>
