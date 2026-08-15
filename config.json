@@ -15,7 +15,7 @@
     "width": 1080,
     "height": 1920,
     "webcam": {
-      "enabled": true,
+      "enabled": false,
       "x": 780,
       "y": 1400,
       "width": 280,
