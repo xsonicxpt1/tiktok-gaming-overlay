@@ -8,7 +8,6 @@
     "secondary": "#FFFFFF",
     "background": "#0A0A0F",
     "accent": "#00F2EA",
-    "blurRadius": "8px",
     "fontFamily": "'Orbitron', system-ui, -apple-system, sans-serif"
   },
   "layout": {
@@ -42,7 +41,7 @@
     "privacyNotice": {
       "x": 20,
       "y": 1890,
-      "text": "Conteúdo desfocado por privacidade (RGPD)",
+      "text": "",
       "fontSize": 11,
       "color": "#555555"
     }

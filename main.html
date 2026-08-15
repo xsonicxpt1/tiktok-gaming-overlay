@@ -11,7 +11,6 @@
       --secondary: #FFFFFF;
       --bg: #0A0A0F;
       --accent: #00F2EA;
-      --blur-radius: 8px;
       --font: 'Orbitron', system-ui, -apple-system, sans-serif;
       --vw: 10.8px;
       --vh: 19.2px;
@@ -439,6 +438,7 @@
       color: #555;
       z-index: 20;
       pointer-events: none;
+      display: none;
     }
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
@@ -520,14 +520,6 @@
     </div>
   </div>
 
-  <!-- Blur Toggle (RGPD) -->
-  <div class="blur-toggle">
-    <button class="blur-btn" id="blur-btn" aria-label="Alternar blur do fundo (tecla B)" title="Clique para alternar blur">
-      BLUR
-      <span class="blur-tooltip">Tecla B • RGPD</span>
-    </button>
-  </div>
-
   <!-- Privacy Notice -->
   <div class="privacy-notice" id="privacy-notice">Conteúdo desfocado por privacidade (RGPD)</div>
 
@@ -550,7 +542,6 @@
       if (config.theme) {
         document.documentElement.style.setProperty('--primary', config.theme.primary || '#FF0050');
         document.documentElement.style.setProperty('--accent', config.theme.accent || '#00F2EA');
-        document.documentElement.style.setProperty('--blur-radius', config.theme.blurRadius || '8px');
       }
       // Game frame URL
       if (config.urls?.gameFrame) {
@@ -606,36 +597,6 @@
       if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
       return n.toString();
     }
-
-    // Blur toggle (RGPD)
-    let blurEnabled = true;
-    const gameFrame = document.getElementById('game-frame');
-    const blurBtn = document.getElementById('blur-btn');
-    const privacyNotice = document.getElementById('privacy-notice');
-
-    function toggleBlur() {
-      blurEnabled = !blurEnabled;
-      gameFrame.style.filter = blurEnabled ? 'blur(var(--blur-radius))' : 'none';
-      privacyNotice.style.display = blurEnabled ? 'block' : 'none';
-      blurBtn.classList.toggle('blur-off', !blurEnabled);
-      blurBtn.textContent = blurEnabled ? 'BLUR' : 'CLARO';
-      // Re-add tooltip
-      const tooltip = document.createElement('span');
-      tooltip.className = 'blur-tooltip';
-      tooltip.textContent = 'Tecla B • RGPD';
-      blurBtn.appendChild(tooltip);
-    }
-
-    blurBtn.addEventListener('click', toggleBlur);
-    document.addEventListener('keydown', e => {
-      if (e.key.toLowerCase() === 'b' && !e.target.matches('input, textarea, button')) {
-        e.preventDefault();
-        toggleBlur();
-      }
-    });
-    window.addEventListener('message', e => {
-      if (e.data?.type === 'TOGGLE_BLUR') toggleBlur();
-    });
 
     // Event system (for alerts overlay integration)
     window.addEventListener('message', e => {
